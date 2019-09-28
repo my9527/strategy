@@ -132,7 +132,8 @@ class Http {
           },
           rejectUnauthorized : false,
         }), (error, response, body) => {
-            // log(response)
+          log('res:', config.url, response.statusCode, response.statusMessage, body);
+
           if (error) {
             reject(error);
           } else {
@@ -150,6 +151,4 @@ class Http {
   }
 }
 
-const httpInstance = new Http()
-
-export default httpInstance;
+export default new Http();
