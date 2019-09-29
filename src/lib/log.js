@@ -14,10 +14,18 @@ const LOG_TYPES = ['warn', 'info', 'debug', 'error'];
         log4js.configure({
             appenders: {
               out: {type: 'stdout'},
-              everything: { type: 'file', filename: path.resolve(__dirname, '../logs/all-the-logs.log') }
+              everything: { 
+                type: 'file', filename: path.resolve(__dirname, '../logs/all-the-logs.log'), maxLogSize: 1024*12,
+                backups: 3
+            },
+              order: { 
+                  type: 'file', filename: path.resolve(__dirname, '../logs/order-logs.log'), maxLogSize: 1024*12,
+                 backups: 3 
+            }
             },
             categories: {
-              default: { appenders: config.saveInFile ? [ 'out','everything' ]: ['out'], level: 'debug' }
+              default: { appenders: config.saveInFile ? [ 'out','everything' ]: ['out'], level: 'debug' },
+              order: { appenders: config.saveInFile ? [ 'out','order' ]: ['out'], level: 'info'}
             }
          });
          // 注入常用方法，不用再次获取实例

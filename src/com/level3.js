@@ -2,7 +2,7 @@ import _ from 'lodash';
 import Datafeed from '../lib/datafeed';
 import log from '../lib/log';
 
-class Ticker {
+class Level3 {
     datafeed;
     symbol;
     snapshot = {
@@ -43,20 +43,20 @@ class Ticker {
         };
     }
 
-    listen = (config = {
-        onMessage: () => {}, // 当数据更新时
+    listen = ({
+        onMessage = () => {}, // 当数据更新时
     }) => {
         this.datafeed.connectSocket();
         this.datafeed.onClose(() => {
-            this.debug && log('ticker ws closed, status ', this.datafeed.trustConnected);
+            this.debug && log('level3 ws closed, status ', this.datafeed.trustConnected);
             this.snapshot.dirty = true;
         });
 
-        this.datafeed.subscribe(`/contractMarket/ticker:${this.symbol}`, (message) => {
+        this.datafeed.subscribe(`/contractMarket/execution:${this.symbol}`, (message) => {
             if (message.data) {
                 this.updateSnapshot(message.data);
-                if(config.onMessage && typeof config.onMessage === 'function'){
-                    config.onMessage(message.data);
+                if(onMessage && typeof onMessage === 'function'){
+                    onMessage(message.data);
                 }
             }
             
@@ -64,4 +64,4 @@ class Ticker {
     }
 }
 
-export default Ticker;
+export default Level3;

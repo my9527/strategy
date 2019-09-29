@@ -109,7 +109,8 @@ export default class Datafeed {
                     break;
                 case 'ping':
                 default:
-                    this.debug && log('unhandle message', evt.data);
+                    console.log(evt.data)
+                    // this.debug && log('unhandle message', evt.data);
                     break;
             }
         };
@@ -345,7 +346,7 @@ export default class Datafeed {
                 id,
                 type: 'ping',
             }));
-            this.debug && log('ping, send');
+            // console.log('ping  send', Date.now());
         }, 10000);
     }
 }
