@@ -1,0 +1,6 @@
+[2019-09-29T10:35:45.547] [INFO] default -   "http use baseUrl: (https://sandbox-api.kumex.com)"  
+[2019-09-29T10:35:45.577] [INFO] default -   "subscribed listener"  
+[2019-09-29T10:35:45.577] [INFO] default -   "topic new subscribe: /contractMarket/level2:XBTUSDM"  
+[2019-09-29T10:35:45.578] [INFO] default -   "client not connected"  
+[2019-09-29T10:35:45.578] [INFO] default -   "subscribed listener id "    1  
+[2019-09-29T10:35:45.578] [INFO] default -   "build dirty level2"  

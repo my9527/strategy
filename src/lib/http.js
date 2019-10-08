@@ -6,7 +6,7 @@ import codes from './codes';
 import log from './log';
 
 const IS_PRODUCT = process.env.PRODUCTION === 'true';
-const baseUrl = IS_PRODUCT || true ? 'https://api.kumex.com' : 'https://sandbox-api.kumex.com';
+const baseUrl = IS_PRODUCT ? 'https://api.kumex.com' : 'https://sandbox-api.kumex.com';
 
 log(`http use baseUrl: (${baseUrl})`);
 
@@ -132,12 +132,13 @@ class Http {
           },
           rejectUnauthorized : false,
         }), (error, response, body) => {
-            // log(response)
+          log('res:', config.url, response.statusCode, response.statusMessage, body);
+
           if (error) {
             reject(error);
           } else {
             const res = JSON.parse(body);
-            if (res.code == codes.SUCCESS) {
+            if (res.code == codes.SUCCESS || res.code == codes.SHORT_SUCCESS) {
               resolve(res);
             } else {
               reject(res);
@@ -150,6 +151,4 @@ class Http {
   }
 }
 
-const httpInstance = new Http()
-
-export default httpInstance;
+export default new Http();

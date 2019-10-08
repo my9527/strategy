@@ -21,43 +21,17 @@ class Level3 {
         }
     }
 
-    getSnapshot = () => {
-        return _.cloneDeep(this.snapshot);
-    };
-
-    updateSnapshot = (data) => {
-        // { symbol: 'XBTUSDM',
-        //     side: 'buy',
-        //     size: 100,
-        //     price: 10000,
-        //     bestBidSize: 9371,
-        //     bestBidPrice: '9996.0',
-        //     bestAskPrice: '10000.0',
-        //     tradeId: '5d8743653c7feb4209084ffa',
-        //     ts: 1569145701444522200,
-        //     bestAskSize: 32422 }
-
-        this.snapshot = {
-            dirty: false,
-            data,
-        };
-    }
-
-    listen = ({
-        onMessage = () => {}, // 当数据更新时
-    }) => {
+    listen = () => {
         this.datafeed.connectSocket();
         this.datafeed.onClose(() => {
             this.debug && log('level3 ws closed, status ', this.datafeed.trustConnected);
-            this.snapshot.dirty = true;
         });
+    }
 
-        this.datafeed.subscribe(`/contractMarket/execution:${this.symbol}`, (message) => {
+    sub = (topic, callback) => {
+        this.datafeed.subscribe(topic, (message) => {
             if (message.data) {
-                this.updateSnapshot(message.data);
-                if(onMessage && typeof onMessage === 'function'){
-                    onMessage(message.data);
-                }
+                callback(message.data)
             }
             
         });

@@ -1,17 +1,15 @@
 /**
- * 事例应用
+ * An example strategy template
  */
-
-// const Koa = require('koa');
-// const app = new Koa();
-
 import _ from 'lodash';
-import Koa from 'koa';
+// import Koa from 'koa';
 // import bodyParser from 'koa-bodyparser';
 import logUpdate from 'log-update';
-import httpIns from '../src/lib/http';
-import { log4 } from '../src/lib/log';
-
+import http from '../src/lib/http';
+import Datafeed from '../src/lib/datafeed';
+import { mergeDepth, targetTypesMap } from '../src/lib/utils';
+import log from '../src/lib/log';
+// import Ticker from '../src/com/ticker';
 import Level2 from '../src/com/level2';
 import Ticker from '../src/com/ticker';
 
@@ -20,14 +18,15 @@ import Grid from './grid'
 
 const grid = new Grid();
 
+const SYMBOL = 'XBTUSDM';
+
 async function main() {
     // const app = new Koa();
-
     // app.use(bodyParser);
     // app.listen(8090);
 
-    // 你的账号相关的数据
-    httpIns.setSignatureConfig(env)
+    // set account api keys
+    http.setSignatureConfig(env);
 
     // 配置log4js
     log4.init({

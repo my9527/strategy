@@ -24,21 +24,19 @@ export default class Datafeed {
     };
     incrementSubscribeId = 0;
     ping = 0;
-    debug = false;
 
-    constructor(privateBullet = false, debug = false) {
+    constructor(privateBullet = false) {
         this.privateBullet = privateBullet;
-        this.debug = debug;
     }
 
     _connecting = false;
     connectSocket = async () => {
         if (this.trustConnected) {
-            this.debug && log('ws conn status: ', this.trustConnected);
+            log('ws conn status: ', this.trustConnected);
             return;
         }
         if (this._connecting) {
-            this.debug && log('ws is connecting, return');
+            log('ws is connecting, return');
             return;
         }
         this._connecting = true;
@@ -49,7 +47,7 @@ export default class Datafeed {
 
         const config = await this._getBulletToken();
         if (!config) {
-            this.debug && log('getPubToken config invalid');
+            log('getPubToken config invalid');
 
             // try to reconnect
             _.delay(() => {
@@ -59,13 +57,13 @@ export default class Datafeed {
             return;
         }
         // log('getPubToken config: ', config);
-        this.debug && log('getPubToken config');
+        log('getPubToken config');
 
         const connectId = generateId();
-        this.debug && log('generate connectId: ', connectId);
+        log('generate connectId: ', connectId);
 
         this.emitter.on(`welcome_${connectId}`, this._handleAfterConnect);
-        this.debug && log('waiting welcome ack...');
+        log('waiting welcome ack...');
 
         const cl = await this._connect({
             server: config.data,
@@ -74,21 +72,21 @@ export default class Datafeed {
 
         cl.onopen = () => {
             // ws.send('foo');
-            this.debug && log('socket connect opend');
+            log('socket connect opend', this._maxId, cl._maxId);
             this.client = cl;
         };
           
         cl.onmessage = (evt) => {
             if (!evt.data) {
-                this.debug && log('invalid message');
+                log('invalid message');
                 return;
             }
             let message = null;
             try {
-                this.debug && log('parse: ', evt.data);
+                log('parse: ', evt.data, this._maxId, cl._maxId);
                 message = JSON.parse(evt.data);
             } catch (e) {
-                this.debug && log('parse message error');
+                log('parse message error');
                 console.error(e);
             }
             if (!message) {
@@ -100,7 +98,7 @@ export default class Datafeed {
                 case 'welcome':
                 case 'ack':
                 case 'pong':
-                    // this.debug && log(`emit: welcome_${id}`);
+                    // log(`emit: welcome_${id}`);
                     this.emitter.emit(`${type}_${id}`);
                     break;
                 case 'message':
@@ -109,18 +107,17 @@ export default class Datafeed {
                     break;
                 case 'ping':
                 default:
-                    console.log(evt.data)
-                    // this.debug && log('unhandle message', evt.data);
+                    log('unhandle message', evt.data);
                     break;
             }
         };
 
         cl.onerror = (e) => {
-            this.debug && log('socket connect onerror', e.message);
+            log('socket connect onerror', this._maxId, cl._maxId, e.message);
         }
 
         cl.onclose = () => {
-            this.debug && log('socket connect closed');
+            log('socket connect closed', this._maxId, cl._maxId);
             this._handleClose();
 
             // try to reconnect
@@ -162,18 +159,18 @@ export default class Datafeed {
         } else {
             this.topicListener[prefix] = [listener];
         }
-        this.debug && log('subscribed listener');
+        log('subscribed listener');
 
         const find = this.topicState.filter(item => item[0] === topic);
         if (find.length === 0) {
-            this.debug && log(`topic new subscribe: ${topic}`);
+            log(`topic new subscribe: ${topic}`);
             this.topicState.push([topic, _private]);
             this._sub(topic, _private);
         } else {
-            this.debug && log(`topic already subscribed: ${topic}`);
+            log(`topic already subscribed: ${topic}`);
         }
 
-        this.debug && log('subscribed listener id ', hookId);
+        log('subscribed listener id ', hookId);
         return hookId;
     }
 
@@ -187,7 +184,7 @@ export default class Datafeed {
                 this.topicListener[prefix] = deleted;
             }
         }
-        this.debug && log('unsubscribed listener id ', hookId);
+        log('unsubscribed listener id ', hookId);
 
         this.topicState = this.topicState.filter(record => record[0] !== topic);
         this._unsub(topic);
@@ -223,7 +220,7 @@ export default class Datafeed {
     }
 
     _handleAfterConnect = () => {
-        this.debug && log('recieved connect welcome ack');
+        log('recieved connect welcome ack');
         this.trustConnected = true;
         this._connecting = false;
 
@@ -236,6 +233,7 @@ export default class Datafeed {
         this._ping();
     }
 
+    _maxId = 0;
     _connect = async (config) => {
         const server = config.server;
         const connectId = config.connectId;
@@ -244,9 +242,12 @@ export default class Datafeed {
             token,
         } = server;
         const url = `${instanceServers[0].endpoint}?token=${token}&acceptUserMessage=true&connectId=${connectId}`;
-        return new WebSocket(url, {
+        this._maxId += 1;
+        const client = new WebSocket(url, {
             handshakeTimeout: 30,
         });
+        client._maxId = this._maxId;
+        return client;
     }
 
     _getBulletToken = async () => {
@@ -258,20 +259,20 @@ export default class Datafeed {
                     '/api/v1/bullet-public'
             );
         } catch (e) {
-            this.debug && log('get bullet error', e);
+            log('get bullet error', e);
         }
         return res;
     }
 
     _sub = (topic, _private = false) => {
         if (!this.trustConnected) {
-            this.debug && log('client not connected');
+            log('client not connected');
             return;
         }
 
         const id = generateId();
         this.emitter.once(`ack_${id}`, () => {
-            this.debug && log(`topic: ${topic} subscribed`);
+            log(`topic: ${topic} subscribed`, id);
         });
 
         this.client.send(JSON.stringify({
@@ -281,18 +282,18 @@ export default class Datafeed {
             private: _private,
             response: true
         }));
-        this.debug && log(`topic subscribe: ${topic}, send`);
+        log(`topic subscribe: ${topic}, send`, id);
     }
 
     _unsub = (topic) => {
         if (!this.trustConnected) {
-            this.debug && log('client not connected');
+            log('client not connected');
             return;
         }
 
         const id = generateId();
         this.emitter.once(`ack_${id}`, () => {
-            this.debug && log(`topic: ${topic} unsubscribed`);
+            log(`topic: ${topic} unsubscribed`, id);
         });
 
         this.client.send(JSON.stringify({
@@ -300,7 +301,7 @@ export default class Datafeed {
             type: 'unsubscribe',
             topic,
         }));
-        this.debug && log(`topic unsubscribe: ${topic}, send`);
+        log(`topic unsubscribe: ${topic}, send`, id);
     }
 
     _pingTs = null;
@@ -316,29 +317,27 @@ export default class Datafeed {
 
         this._pingTs = setInterval(() => {
             if (!this.trustConnected) {
-                this.debug && log('client not connected');
+                log('client not connected');
                 return;
             }
             const id = generateId();
 
             // ping timeout
             const timer = setTimeout(() => {
-                this.debug && log('ping wait pong timeout');
+                log('ping wait pong timeout');
+                this._clearPing();
 
                 if (this.client) {
                     this.client.terminate();
                     this.client = null;
                 }
-
-                this._handleClose();
-                this.connectSocket();
             }, 5000);
 
             // calc ping ms
             const pingPerform = Date.now(); 
             this.emitter.once(`pong_${id}`, () => {
                 this.ping = Date.now() - pingPerform;
-                this.debug && log('ping get pong');
+                log('ping get pong');
                 clearTimeout(timer);
             });
 
@@ -346,7 +345,11 @@ export default class Datafeed {
                 id,
                 type: 'ping',
             }));
+<<<<<<< HEAD
             // console.log('ping  send', Date.now());
+=======
+            log('ping, send');
+>>>>>>> origin/master
         }, 10000);
     }
 }

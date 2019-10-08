@@ -48,13 +48,15 @@ yarn run dev -- [appName]
 ## TODO
 
 - [x] Datafeed
+- [x] Logger
 - [x] Ticker
 - [x] Level2
-- [ ] Order
-- [ ] Orders
-- [ ] Position
-- [ ] Funding Fees
-- [ ] Time
+- [x] Order
+- [x] Orders
+- [x] Position
+- [x] Account Overview
+- [x] Funding Fees
+- [x] Time
 - [ ] Level3
 
 ## License

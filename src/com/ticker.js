@@ -7,9 +7,8 @@ class Ticker {
     symbol;
     snapshot = {
         dirty: true,
-        data: null,
+        data: {},
     };
-    debug = false;
 
     constructor(symbol, datafeed) {
         this.symbol = symbol;
@@ -48,7 +47,7 @@ class Ticker {
     }) => {
         this.datafeed.connectSocket();
         this.datafeed.onClose(() => {
-            this.debug && log('ticker ws closed, status ', this.datafeed.trustConnected);
+            log('ticker ws closed, status ', this.datafeed.trustConnected);
             this.snapshot.dirty = true;
         });
 
