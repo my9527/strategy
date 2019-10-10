@@ -61,9 +61,13 @@ export const arrMap = (map = {}, order = 'asc') => {
     });
     return res;
 };
-export const getSocketIns = async () => {
+
+
+export const getSocketIns = async (autoConnect = false) => {
     const datafeed = new DataFeed();
-    await datafeed.connectSocket();
+    if(autoConnect){
+        await datafeed.connectSocket();
+    }
     return datafeed;
 }
 

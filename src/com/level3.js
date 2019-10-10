@@ -29,6 +29,7 @@ class Level3 {
     }
 
     sub = (topic, callback) => {
+        // const level3Keys = ['side', 'size', 'price', 'takerOrderId', 'makerOrderId', 'tradeId', 'clientOid', 'orderId']
         this.datafeed.subscribe(topic, (message) => {
             if (message.data) {
                 callback(message.data)
