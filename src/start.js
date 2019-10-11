@@ -13,7 +13,7 @@ const appName = $appName || 'template';
 const modulePath = path.resolve(
     __dirname,
     '../app/',
-    `${appName}.js`
+    `${appName}`
 );
 
 require(modulePath);

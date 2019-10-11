@@ -21,7 +21,8 @@ class Log {
         log4js.configure({
             appenders: {
                 out: { type: 'stdout' },
-                writeFile: { type: 'file', filename: path.resolve(__dirname, `../../logs/${nowTime}.log`) }
+                writeFile: { type: 'file', filename: path.resolve(__dirname, `../../logs/${nowTime}.log`) },
+                order: { type: 'file', filename: path.resolve(__dirname, `../../logs/order.log`)},
             },
             categories: {
                 default: {
