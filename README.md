@@ -57,7 +57,8 @@ yarn run dev -- [appName]
 - [x] Account Overview
 - [x] Funding Fees
 - [x] Time
-- [ ] Level3
+- [x] Level3
+- [ ] Build As SDK
 
 ## License
 
