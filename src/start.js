@@ -9,7 +9,7 @@ process.on('unhandledRejection', error => {
 });
 
 const [$node, $start, $appName] = process.argv;
-const appName = $appName || 'template';
+const appName = $appName || 'trend';
 const modulePath = path.resolve(
     __dirname,
     '../app/',

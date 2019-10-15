@@ -83,7 +83,7 @@ export default class Datafeed {
             }
             let message = null;
             try {
-                log('parse: ', evt.data, this._maxId, cl._maxId);
+                // log('parse: ', evt.data, this._maxId, cl._maxId);
                 message = JSON.parse(evt.data);
             } catch (e) {
                 log('parse message error');

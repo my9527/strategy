@@ -22,13 +22,17 @@ class Log {
             appenders: {
                 out: { type: 'stdout' },
                 writeFile: { type: 'file', filename: path.resolve(__dirname, `../../logs/${nowTime}.log`) },
-                order: { type: 'file', filename: path.resolve(__dirname, `../../logs/order.log`)},
+                orderFile: { type: 'file', filename: path.resolve(__dirname, `../../logs/order.log`)},
             },
             categories: {
                 default: {
                     appenders: this.writeFile ? ['writeFile'] : ['out'],
                     level: 'debug',
                 },
+                order: {
+                    appenders: ['orderFile'],
+                    level: 'debug',
+                }
             },
         });
         // 注入常用方法，不用再次获取实例
@@ -66,5 +70,7 @@ const log = (...props) => {
     const logger = log4.getLogger();
     logger[_type](`${_str}`);
 }
+
+export { log4 };
 
 export default log;
