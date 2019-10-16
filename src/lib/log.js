@@ -1,8 +1,9 @@
 import log4js from 'log4js';
 import path from 'path';
 import moment from 'moment';
-import configure from '../../.env.js';
+import { getEnv } from './env';
 
+const configure = getEnv();
 const LOG_TYPES = ['warn', 'info', 'debug', 'error'];
 
 class Log {
@@ -18,10 +19,12 @@ class Log {
         }
 
         const nowTime = moment().format('YYYY-MM-DD_HH:mm:ss');
+        const logFile = path.resolve(__dirname, `../../logs/${nowTime}.log`);
+        console.log(logFile);
         log4js.configure({
             appenders: {
                 out: { type: 'stdout' },
-                writeFile: { type: 'file', filename: path.resolve(__dirname, `../../logs/${nowTime}.log`) }
+                writeFile: { type: 'file', filename: logFile }
             },
             categories: {
                 default: {
