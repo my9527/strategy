@@ -69,3 +69,6 @@ pm2.json
 !app/.gitkeep
 !app/template.js
 /logs
+.vscode/
+.vscode
+.gitignore
