@@ -23,6 +23,7 @@ class Level2 {
         asks: {},
         bids: {},
     };
+    messageEventCallback;
 
     constructor(symbol, datafeed) {
         this.symbol = symbol;
@@ -40,23 +41,13 @@ class Level2 {
             const [price, type, size] = change.split(',');
             const seq = this.fullSnapshot.sequence;
             // log('check', sequence, seq);
+            const messageFormat = [sequence, price, type, size];
             if (this.fullSnapshot.dirty === false && sequence === seq + 1) {
                 // update
-                const targetType = targetTypesMap[type];
-                if (_.indexOf(changeTypes, targetType) > -1) {
-                    const targetPrice = mergeDepth(price, targetType);
-                    if (size == 0) {
-                        delete this.fullSnapshot[targetType][targetPrice];
-                    } else {
-                        this.fullSnapshot[targetType][targetPrice] = size;
-                    }
-                    this.fullSnapshot.sequence = sequence;
-                } else {
-                    log('invalid type', type);
-                }
+                this.updateFullByMessage(messageFormat);
             } else
             if (sequence > seq) {
-                this.buffer.push([sequence, price, type, size]);
+                this.buffer.push(messageFormat);
                 // rebuild
                 this.rebuild();
             }
@@ -101,19 +92,8 @@ class Level2 {
                 if (continu) {
                     log('seq & len', this.fullSnapshot.sequence, bufferArr.length, this.buffer.length);
                     _.each(bufferArr, (item) => {
-                        const [sequence, price, type, size] = item;
-                        const targetType = targetTypesMap[type];
-                        if (_.indexOf(changeTypes, targetType) > -1) {
-                            const targetPrice = mergeDepth(price, targetType);
-                            if (size == 0) {
-                                delete this.fullSnapshot[targetType][targetPrice];
-                            } else {
-                                this.fullSnapshot[targetType][targetPrice] = size;
-                            }
-                            this.fullSnapshot.sequence = sequence;
-                        } else {
-                            log('invalid type', type);
-                        }
+                        // update
+                        this.updateFullByMessage(item);
                     });
                     this.fullSnapshot.dirty = false;
                     this.buffer = [];
@@ -159,6 +139,27 @@ class Level2 {
         return fetchSuccess;
     }
 
+    updateFullByMessage = (message) => {
+        const [sequence, price, type, size] = message;
+        const targetType = targetTypesMap[type];
+        if (_.indexOf(changeTypes, targetType) > -1) {
+            const targetPrice = mergeDepth(price, targetType);
+            if (size == 0) {
+                delete this.fullSnapshot[targetType][targetPrice];
+            } else {
+                this.fullSnapshot[targetType][targetPrice] = size;
+            }
+            this.fullSnapshot.sequence = sequence;
+
+            // callback message
+            if (typeof this.messageEventCallback === 'function') {
+                this.messageEventCallback(message);
+            }
+        } else {
+            log('invalid change type', type);
+        }
+    }
+
     /** public */
     listen = () => {
         this.datafeed.connectSocket();
@@ -177,7 +178,12 @@ class Level2 {
         this.rebuild();
     }
 
-    // TODO message event handler
+    // message event handler
+    handleMessageEvent = (callback) => {
+        if (typeof callback === 'function') {
+            this.messageEventCallback = callback;
+        }
+    }
 
     getOrderBook = (limit = 10) => {
         const dirty = this.fullSnapshot.dirty;
