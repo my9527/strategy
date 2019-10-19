@@ -1,16 +1,62 @@
-
+import _ from 'lodash';
 import http from '../lib/http';
+import Datafeed from '../lib/datafeed';
 import log from '../lib/log';
 
 class Position {
+    datafeed;
     symbol;
+    dirty = true;
+    info = {};
 
-    constructor(symbol) {
+    constructor(symbol, datafeed) {
         this.symbol = symbol;
+
+        if (datafeed instanceof Datafeed) {
+            this.datafeed = datafeed;
+        } else {
+            this.datafeed = new Datafeed();
+        }
+    }
+
+    getPos = () => {
+        return {
+            dirty: this.dirty,
+            pos: this.info,
+        };
     }
     
-    // TODO update by websocket
+    // update by websocket
+    updateByMessage = (subject, data) => {
+        switch(subject) {
+            case 'position.change':
+            {
+                this.info = {
+                    ...this.info,
+                    ...data,
+                };
+                this.dirty = false;
+            }
+            break;
+            default:
+            // position.settlement
+            break;
+        }
+    }
 
+    // rebuild
+    rebuild = async () => {
+        this.dirty = true;
+        const res = await this.getPosition();
+        if (res !== false) {
+            if (res) {
+                this.info = res;
+            } else {
+                this.info = {};
+            }
+            this.dirty = false;
+        }
+    }
 
     getPosition = async () => {
         // GET /api/v1/position?symbol=XBTUSDM
@@ -68,6 +114,26 @@ class Position {
         }
         return result;
     }
+
+    listen = () => {
+        this.datafeed.connectSocket();
+        this.datafeed.onClose(() => {
+            log('ws closed, status ', this.datafeed.trustConnected);
+            this.rebuild();
+        });
+
+        const topic = `/contract/position:${this.symbol}`;
+        this.datafeed.subscribe(topic, (message) => {
+            if (message.topic === topic &&
+                message.userId // private message
+            ) {
+                // log(message);
+                this.updateByMessage(message.subject, message.data);
+            }
+        });
+        this.rebuild();
+    }
+
 }
 
 export default Position;
