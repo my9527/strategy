@@ -7,9 +7,10 @@ class Order {
     symbol;
     leverage;
 
-    constructor(symbol, leverage) {
+    constructor(symbol, leverage, clOrderMp) {
         this.symbol = symbol;
         this.leverage = leverage;
+        this.clOrderMp = clOrderMp;
     }
 
     static LIMIT_SELECT = {
@@ -233,6 +234,9 @@ class Order {
         try {
             const clientOid = genUUID();
 
+            if (this.clOrderMp) {
+                this.clOrderMp[clientOid] = true;
+            }
             const { data: { orderId } } = await http.post('/api/v1/orders', {
                 ...typeProps,
                 clientOid,
