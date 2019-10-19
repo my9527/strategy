@@ -1,8 +1,16 @@
 {
   "name": "kumex-node-sdk",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.0.2",
+  "description": "KuMEX API SDK for Node.js language",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Kucoin/kumex-node-sdk.git"
+  },
+  "main": "sdk/index.js",
+  "files": [
+    "sdk",
+    "README.md"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "PRODUCTION=false nodemon src/start.js",

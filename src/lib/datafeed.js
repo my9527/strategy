@@ -24,9 +24,13 @@ export default class Datafeed {
     };
     incrementSubscribeId = 0;
     ping = 0;
+    logMessage = true;
 
-    constructor(privateBullet = false) {
+    constructor(privateBullet = false, config = {}) {
         this.privateBullet = privateBullet;
+        if (config) {
+            this.logMessage = config.logMessage || false;
+        }
     }
 
     _connecting = false;
@@ -83,7 +87,9 @@ export default class Datafeed {
             }
             let message = null;
             try {
-                log('parse: ', evt.data, this._maxId, cl._maxId);
+                if (this.logMessage) {
+                    log('parse: ', evt.data, this._maxId, cl._maxId);
+                }
                 message = JSON.parse(evt.data);
             } catch (e) {
                 log('parse message error');
