@@ -62,10 +62,10 @@ class Level3 {
     _rebuilding = false;
     rebuild = async () => {
         if (this._rebuilding) {
-            log('rebuilding dirty level3, return',
-                this.fullSnapshot.sequence,
-                this.buffer.length && this.buffer[this.buffer.length - 1].sequence,
-            );
+            // log('rebuilding dirty level3, return',
+            //     this.fullSnapshot.sequence,
+            //     this.buffer.length && this.buffer[this.buffer.length - 1].sequence,
+            // );
             return;
         }
         log('build dirty level3');
