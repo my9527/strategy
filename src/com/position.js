@@ -39,7 +39,7 @@ class Position {
             }
             break;
             default:
-            // position.settlement
+            // TODO position.settlement ?
             break;
         }
     }
