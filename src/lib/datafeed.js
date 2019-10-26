@@ -29,7 +29,7 @@ export default class Datafeed {
     constructor(privateBullet = false, config = {}) {
         this.privateBullet = privateBullet;
         if (config) {
-            this.logMessage = config.logMessage || false;
+            this.logMessage = config.logMessage || this.logMessage;
         }
     }
 
