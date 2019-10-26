@@ -8,6 +8,7 @@ class Position {
     symbol;
     dirty = true;
     info = {};
+    messageEventCallback;
 
     constructor(symbol, datafeed) {
         this.symbol = symbol;
@@ -17,6 +18,10 @@ class Position {
         } else {
             this.datafeed = new Datafeed();
         }
+    }
+
+    setDirty = () => {
+        this.dirty = true;
     }
 
     getPos = () => {
@@ -41,6 +46,11 @@ class Position {
             default:
             // TODO position.settlement ?
             break;
+        }
+
+        // callback message
+        if (typeof this.messageEventCallback === 'function') {
+            this.messageEventCallback(subject);
         }
     }
 
@@ -113,6 +123,13 @@ class Position {
             log('get position error', this.symbol, e);
         }
         return result;
+    }
+
+    // message event handler
+    handleMessageEvent = (callback) => {
+        if (typeof callback === 'function') {
+            this.messageEventCallback = callback;
+        }
     }
 
     listen = () => {

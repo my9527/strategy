@@ -51,7 +51,7 @@ class Order {
             forceHold	boolean	[可选] 强制冻结标记（减仓同样适用）,可将订单留在买卖盘中而不受仓位变化的影响。默认值是 false
         */
         if (
-            !_.isFinite(price) ||
+            !_.isFinite(+price) ||
             typeof size !== 'number' ||
             !(size > 0)
         ) {
