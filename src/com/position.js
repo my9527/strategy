@@ -149,6 +149,22 @@ class Position {
             }
         });
         this.rebuild();
+
+        setInterval(async () => {
+            if (this.dirty) {
+                const res = await this.getPosition();
+                if (res !== false) {
+                    if (this.dirty) {
+                        if (res) {
+                            this.info = res;
+                        } else {
+                            this.info = {};
+                        }
+                        this.dirty = false;
+                    }
+                }
+            }
+        }, 5000);
     }
 
 }
