@@ -1,10 +1,61 @@
 
+import Datafeed from '../lib/datafeed';
 import http from '../lib/http';
 import log from '../lib/log';
 
 class Account {
+    datafeed;
+    dirty = true;
+    info = {};
 
-    // TODO update by websocket
+    constructor(datafeed) {
+
+        if (datafeed instanceof Datafeed) {
+            this.datafeed = datafeed;
+        } else {
+            this.datafeed = new Datafeed();
+        }
+    }
+
+    getAccount = () => {
+        return {
+            dirty: this.dirty,
+            acc: this.info,
+        };
+    }
+    
+    // update by websocket
+    updateByMessage = (subject, data) => {
+        switch(subject) {
+            case 'orderMargin.change':
+            case 'availableBalance.change':
+            {
+                this.info = {
+                    ...this.info,
+                    ...data,
+                };
+                this.dirty = false;
+            }
+            break;
+            default:
+            // TODO withdrawHold.change ?
+            break;
+        }
+    }
+
+    // rebuild
+    rebuild = async () => {
+        this.dirty = true;
+        const res = await this.getOverview();
+        if (res !== false) {
+            if (res) {
+                this.info = res;
+            } else {
+                this.info = {};
+            }
+            this.dirty = false;
+        }
+    }
 
     getOverview = async () => {
         // GET /api/v1/account-overview
@@ -32,6 +83,26 @@ class Account {
         }
         return result;
     }
+
+    listen = () => {
+        this.datafeed.connectSocket();
+        this.datafeed.onClose(() => {
+            log('ws closed, status ', this.datafeed.trustConnected);
+            this.rebuild();
+        });
+
+        const topic = `/contractAccount/wallet`;
+        this.datafeed.subscribe(topic, (message) => {
+            if (message.topic === topic &&
+                message.userId // private message
+            ) {
+                // log(message);
+                this.updateByMessage(message.subject, message.data);
+            }
+        });
+        this.rebuild();
+    }
+
 }
 
 export default Account;

@@ -1,4 +1,4 @@
-
+import _ from 'lodash';
 import http from '../lib/http';
 import log from '../lib/log';
 import { genUUID } from '../lib/utils';
@@ -6,11 +6,19 @@ import { genUUID } from '../lib/utils';
 class Order {
     symbol;
     leverage;
+    hookOrder = null;
+    hookCancle = null;
 
-    constructor(symbol, leverage, clOrderMp) {
+    constructor(symbol, leverage, hooks = {}) {
         this.symbol = symbol;
         this.leverage = leverage;
-        this.clOrderMp = clOrderMp;
+        
+        if (typeof hooks.hookOrder === 'function') {
+            this.hookOrder = hooks.hookOrder;
+        }
+        if (typeof hooks.hookCancle === 'function') {
+            this.hookCancle = hooks.hookCancle;
+        }
     }
 
     static LIMIT_SELECT = {
@@ -42,12 +50,17 @@ class Order {
             closeOrder	boolean	[可选] 平仓单标记, 默认值是 false
             forceHold	boolean	[可选] 强制冻结标记（减仓同样适用）,可将订单留在买卖盘中而不受仓位变化的影响。默认值是 false
         */
-        if (typeof price !== 'string' ||
+        if (
+            !_.isFinite(+price) ||
             typeof size !== 'number' ||
             !(size > 0)
         ) {
             log('Invalid price or size', price, size);
             return false;
+        }
+
+        if (typeof price !== 'string') {
+            price = `${price}`;
         }
 
         return await this._order('limit', side, {
@@ -94,6 +107,10 @@ class Order {
             return result;
         }
         try {
+            if (typeof this.hookCancle === 'function') {
+                this.hookCancle(orderServId, true);
+            }
+
             // {
             //     "code": "200000",
             //     "data": {
@@ -105,6 +122,9 @@ class Order {
             const { data: { cancelledOrderIds } } = await http.del(`/api/v1/orders/${orderServId}`);
             result = cancelledOrderIds;
         } catch (e) {
+            if (typeof this.hookCancle === 'function') {
+                this.hookCancle(orderServId, false);
+            }
             log('cancle order error', e);
         }
         return result;
@@ -230,12 +250,11 @@ class Order {
             closeOrder	boolean	[可选] 平仓单标记, 默认值是 false
             forceHold	boolean	[可选] 强制冻结标记（减仓同样适用）,可将订单留在买卖盘中而不受仓位变化的影响。默认值是 false
         */
+        const clientOid = genUUID();
         let result = false;
         try {
-            const clientOid = genUUID();
-
-            if (this.clOrderMp) {
-                this.clOrderMp[clientOid] = true;
+            if (typeof this.hookOrder === 'function') {
+                this.hookOrder(clientOid, true);
             }
             const { data: { orderId } } = await http.post('/api/v1/orders', {
                 ...typeProps,
@@ -251,6 +270,9 @@ class Order {
                 clOid: clientOid,
             };
         } catch (e) {
+            if (typeof this.hookOrder === 'function') {
+                this.hookOrder(clientOid, false);
+            }
             log('order error', e);
         }
         return result;

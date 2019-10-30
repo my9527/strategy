@@ -1,16 +1,72 @@
-
+import _ from 'lodash';
 import http from '../lib/http';
+import Datafeed from '../lib/datafeed';
 import log from '../lib/log';
 
 class Position {
+    datafeed;
     symbol;
+    dirty = true;
+    info = {};
+    messageEventCallback;
 
-    constructor(symbol) {
+    constructor(symbol, datafeed) {
         this.symbol = symbol;
+
+        if (datafeed instanceof Datafeed) {
+            this.datafeed = datafeed;
+        } else {
+            this.datafeed = new Datafeed();
+        }
+    }
+
+    setDirty = () => {
+        this.dirty = true;
+    }
+
+    getPos = () => {
+        return {
+            dirty: this.dirty,
+            pos: this.info,
+        };
     }
     
-    // TODO update by websocket
+    // update by websocket
+    updateByMessage = (subject, data) => {
+        switch(subject) {
+            case 'position.change':
+            {
+                this.info = {
+                    ...this.info,
+                    ...data,
+                };
+                this.dirty = false;
+            }
+            break;
+            default:
+            // TODO position.settlement ?
+            break;
+        }
 
+        // callback message
+        if (typeof this.messageEventCallback === 'function') {
+            this.messageEventCallback(subject);
+        }
+    }
+
+    // rebuild
+    rebuild = async () => {
+        this.dirty = true;
+        const res = await this.getPosition();
+        if (res !== false) {
+            if (res) {
+                this.info = res;
+            } else {
+                this.info = {};
+            }
+            this.dirty = false;
+        }
+    }
 
     getPosition = async () => {
         // GET /api/v1/position?symbol=XBTUSDM
@@ -68,6 +124,49 @@ class Position {
         }
         return result;
     }
+
+    // message event handler
+    handleMessageEvent = (callback) => {
+        if (typeof callback === 'function') {
+            this.messageEventCallback = callback;
+        }
+    }
+
+    listen = () => {
+        this.datafeed.connectSocket();
+        this.datafeed.onClose(() => {
+            log('ws closed, status ', this.datafeed.trustConnected);
+            this.rebuild();
+        });
+
+        const topic = `/contract/position:${this.symbol}`;
+        this.datafeed.subscribe(topic, (message) => {
+            if (message.topic === topic &&
+                message.userId // private message
+            ) {
+                // log(message);
+                this.updateByMessage(message.subject, message.data);
+            }
+        });
+        this.rebuild();
+
+        setInterval(async () => {
+            if (this.dirty) {
+                const res = await this.getPosition();
+                if (res !== false) {
+                    if (this.dirty) {
+                        if (res) {
+                            this.info = res;
+                        } else {
+                            this.info = {};
+                        }
+                        this.dirty = false;
+                    }
+                }
+            }
+        }, 5000);
+    }
+
 }
 
 export default Position;

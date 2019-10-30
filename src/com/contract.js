@@ -3,15 +3,26 @@
 
 import http from '../lib/http';
 import log from '../lib/log';
+import delay from '../lib/delay';
 
 const IS_PRODUCT = global._USE_KUMEX_ONLINE_ || process.env.PRODUCTION === 'true';
 const baseUrl = IS_PRODUCT ? 'https://kitchen.kumex.top' : 'https://kitchen-sdb.kumex.com';
+const delayPollMS = 1000 * 60;
 
 class Contract {
     symbol;
+    info;
 
     constructor(symbol) {
         this.symbol = symbol;
+        this.info = false;
+    }
+
+    pollOverview = async () => {
+        while(true) {
+            this.info = await this.getOverview();
+            await delay(delayPollMS);
+        }
     }
 
     getOverview = async () => {
@@ -67,7 +78,7 @@ class Contract {
                     "markPrice": 8112.62,
                     "indexPrice": 8111.96,
                     "lastTradePrice": 8102.0000000000,
-                    "nextFundingRateTime": 23531767 // 距离下一个资金费用结算时间点的剩余时间
+                    "nextFundingRateTime": 23531767 // 距离下一个资金费用结算时间点的剩余时间 ms
                 }
             }
             */

@@ -24,7 +24,7 @@ export default class Datafeed {
     };
     incrementSubscribeId = 0;
     ping = 0;
-    logMessage = true;
+    logMessage = false;
 
     constructor(privateBullet = false, config = {}) {
         this.privateBullet = privateBullet;

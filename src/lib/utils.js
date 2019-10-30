@@ -6,6 +6,11 @@ export const targetTypesMap = {
     buy: 'bids',
 };
 
+export const typesTargetMap = {
+    asks: 'sell',
+    bids: 'buy',
+};
+
 export const genUUID = (prefix = '')=> {
     return prefix + '__' +uuid();
 };

@@ -62,10 +62,10 @@ class Level3 {
     _rebuilding = false;
     rebuild = async () => {
         if (this._rebuilding) {
-            log('rebuilding dirty level3, return',
-                this.fullSnapshot.sequence,
-                this.buffer.length && this.buffer[this.buffer.length - 1].sequence,
-            );
+            // log('rebuilding dirty level3, return',
+            //     this.fullSnapshot.sequence,
+            //     this.buffer.length && this.buffer[this.buffer.length - 1].sequence,
+            // );
             return;
         }
         log('build dirty level3');
@@ -142,7 +142,7 @@ class Level3 {
     updateFullByMessage = (message) => {
         const { sequence, type } = message;
 
-        let updated = true;
+        let updated = false;
         switch (type) {
             case 'received':
                 /*
@@ -154,6 +154,7 @@ class Level3 {
                 */
                 {
                     // received event
+                    updated = true;
                 }
             break;
             case 'open':
@@ -174,11 +175,14 @@ class Level3 {
                     const { side, orderId, price, size, orderTime, ts } = message;
                     const targetType = targetTypesMap[side];
                     if (_.indexOf(changeTypes, targetType) > -1) {
-                        this.fullSnapshot[targetType][orderId] = [
-                            // [0      , 1    ,  2  , 3     , 4]
-                            // [下单时间, 订单号, 价格, 数量, 进入买卖盘时间]
-                            orderTime, orderId, price, size, ts
-                        ];
+                        if (price) {
+                            this.fullSnapshot[targetType][orderId] = [
+                                // [0      , 1    ,  2  , 3     , 4]
+                                // [下单时间, 订单号, 价格, 数量, 进入买卖盘时间]
+                                orderTime, orderId, price, size, ts
+                            ];
+                            updated = true;
+                        }
                     }
                 }
             break;
@@ -208,6 +212,7 @@ class Level3 {
                                 this.fullSnapshot[targetType][makerOrderId][3] = size;
                             }
                         }
+                        updated = true;
                     }
                 }
             break;
@@ -225,19 +230,22 @@ class Level3 {
                 {
                     // update event
                     const { orderId, size } = message;
-                    if (this.fullSnapshot.asks[orderId]) {
-                        if (size <= 0) {
-                            delete this.fullSnapshot.asks[orderId];
-                        } else {
-                            this.fullSnapshot.asks[orderId][3] = size;
+                    if (orderId) {
+                        if (this.fullSnapshot.asks[orderId]) {
+                            if (size <= 0) {
+                                delete this.fullSnapshot.asks[orderId];
+                            } else {
+                                this.fullSnapshot.asks[orderId][3] = size;
+                            }
                         }
-                    }
-                    if (this.fullSnapshot.bids[orderId]) {
-                        if (size <= 0) {
-                            delete this.fullSnapshot.bids[orderId];
-                        } else {
-                            this.fullSnapshot.bids[orderId][3] = size;
+                        if (this.fullSnapshot.bids[orderId]) {
+                            if (size <= 0) {
+                                delete this.fullSnapshot.bids[orderId];
+                            } else {
+                                this.fullSnapshot.bids[orderId][3] = size;
+                            }
                         }
+                        updated = true;
                     }
                 }
             break;
@@ -254,11 +262,14 @@ class Level3 {
                 {
                     // done event
                     const { orderId } = message;
-                    if (this.fullSnapshot.asks[orderId]) {
-                        delete this.fullSnapshot.asks[orderId];
-                    }
-                    if (this.fullSnapshot.bids[orderId]) {
-                        delete this.fullSnapshot.bids[orderId];
+                    if (orderId) {
+                        if (this.fullSnapshot.asks[orderId]) {
+                            delete this.fullSnapshot.asks[orderId];
+                        }
+                        if (this.fullSnapshot.bids[orderId]) {
+                            delete this.fullSnapshot.bids[orderId];
+                        }
+                        updated = true;
                     }
                 }
             break;
